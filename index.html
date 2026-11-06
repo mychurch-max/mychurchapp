@@ -173,35 +173,8 @@ iframe.addEventListener('load', () => {
   loading.style.display = 'none';
 });
 
-function navigate(direction) {
-
-  const id = direction === 'next' ? nextId : previousId;
-
-  const title = direction === 'next' ? nextTitle : previousTitle;
-
-  if (!id) return;
-
-  const newParams = new URLSearchParams();
-
-  newParams.set('v', id);
-  newParams.set('title', title);
-
-  const oldId = videoId;
-  const oldTitle = videoTitle;
-
-  const otherId = direction === 'next' ? previousId : nextId;
-  const otherTitle = direction === 'next' ? previousTitle : nextTitle;
-
-  newParams.set(direction === 'next' ? 'prev' : 'next', oldId);
-  newParams.set(direction === 'next' ? 'prevTitle' : 'nextTitle', oldTitle);
-
-  if (otherId) {
-    newParams.set(direction === 'next' ? 'next' : 'prev', otherId);
-    newParams.set(direction === 'next' ? 'nextTitle' : 'prevTitle', otherTitle);
-  }
-
-  location.search = newParams.toString();
-
+function goBack() {
+  location.href = 'mychurch://back';
 }
 
 function retryVideo() {
