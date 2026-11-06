@@ -1,93 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MY CHURCH - Bible Stories</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<title>MY CHURCH - Bible Stories</title>
 
-        body {
-            margin: 0;
-            background: #000;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
+<style>
+* {
+  box-sizing: border-box;
+}
 
-        .player-container {
-            width: 100%;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 12px;
-        }
+body {
+  margin: 0;
+  background: #000;
+  color: white;
+  font-family: Arial, sans-serif;
+}
 
-        .video-container {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            background: #111;
-        }
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: #151515;
+}
 
-        iframe {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border: 0;
-        }
+button {
+  border: none;
+  border-radius: 7px;
+  padding: 11px 15px;
+  background: #d4af37;
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+}
 
-        #message {
-            text-align: center;
-            padding: 30px;
-            color: #ddd;
-        }
-    </style>
+.title {
+  flex: 1;
+  font-size: 17px;
+  font-weight: bold;
+}
+
+.player {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  position: relative;
+  background: #111;
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  position: absolute;
+}
+
+#loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #111;
+  z-index: 2;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 18px 10px;
+}
+
+button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+</style>
 </head>
 
 <body>
 
-<div class="player-container">
+<div class="header">
 
-    <div class="video-container" id="videoContainer">
-        <div id="message">Loading Bible story...</div>
-    </div>
+  <button onclick="goBack()">← Back</button>
+
+  <div class="title" id="title">
+    Bible Story
+  </div>
+
+</div>
+
+<div class="player">
+
+  <div id="loading">Loading Bible story...</div>
+
+  <iframe
+    id="youtube"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    allowfullscreen
+    referrerpolicy="strict-origin-when-cross-origin">
+  </iframe>
+
+</div>
+
+<div class="controls">
+
+  <button id="previous" onclick="navigate('prev')">
+    ⏮ Previous
+  </button>
+
+  <button onclick="retryVideo()">
+    ↻ Retry
+  </button>
+
+  <button onclick="exitFullscreen()">
+    Exit Fullscreen
+  </button>
+
+  <button id="next" onclick="navigate('next')">
+    Next ⏭
+  </button>
 
 </div>
 
 <script>
-    const params = new URLSearchParams(window.location.search);
-    const videoId = params.get("v");
 
-    const container = document.getElementById("videoContainer");
+const params = new URLSearchParams(location.search);
 
-    if (videoId && /^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+let videoId = params.get('v') || '';
 
-        const iframe = document.createElement("iframe");
+let videoTitle = params.get('title') || 'Bible Story';
 
-        const origin = window.location.origin;
+let previousId = params.get('prev') || '';
+let previousTitle = params.get('prevTitle') || '';
 
-        iframe.src =
-            "https://www.youtube-nocookie.com/embed/" +
-            encodeURIComponent(videoId) +
-            "?enablejsapi=1" +
-            "&playsinline=1" +
-            "&origin=" + encodeURIComponent(origin);
+let nextId = params.get('next') || '';
+let nextTitle = params.get('nextTitle') || '';
 
-        iframe.title = "MY CHURCH Bible Story";
-        iframe.allow =
-            "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
-        iframe.allowFullscreen = true;
-        iframe.referrerPolicy = "strict-origin-when-cross-origin";
+const iframe = document.getElementById('youtube');
+const loading = document.getElementById('loading');
 
-        container.innerHTML = "";
-        container.appendChild(iframe);
+function updateInterface() {
 
-    } else {
-        container.innerHTML =
-            '<div id="message">No valid Bible story video was selected.</div>';
-    }
+  document.getElementById('title').textContent = videoTitle;
+
+  document.getElementById('previous').disabled = !previousId;
+  document.getElementById('next').disabled = !nextId;
+
+}
+
+function loadVideo() {
+
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+    loading.textContent = 'Invalid video ID.';
+    return;
+  }
+
+  loading.style.display = 'flex';
+  loading.textContent = 'Loading Bible story...';
+
+  iframe.src =
+    'https://www.youtube-nocookie.com/embed/' +
+    encodeURIComponent(videoId) +
+    '?playsinline=1&rel=0';
+
+}
+
+iframe.addEventListener('load', () => {
+  loading.style.display = 'none';
+});
+
+function navigate(direction) {
+
+  const id = direction === 'next' ? nextId : previousId;
+
+  const title = direction === 'next' ? nextTitle : previousTitle;
+
+  if (!id) return;
+
+  const newParams = new URLSearchParams();
+
+  newParams.set('v', id);
+  newParams.set('title', title);
+
+  const oldId = videoId;
+  const oldTitle = videoTitle;
+
+  const otherId = direction === 'next' ? previousId : nextId;
+  const otherTitle = direction === 'next' ? previousTitle : nextTitle;
+
+  newParams.set(direction === 'next' ? 'prev' : 'next', oldId);
+  newParams.set(direction === 'next' ? 'prevTitle' : 'nextTitle', oldTitle);
+
+  if (otherId) {
+    newParams.set(direction === 'next' ? 'next' : 'prev', otherId);
+    newParams.set(direction === 'next' ? 'nextTitle' : 'prevTitle', otherTitle);
+  }
+
+  location.search = newParams.toString();
+
+}
+
+function retryVideo() {
+
+  loading.style.display = 'flex';
+  iframe.src = 'about:blank';
+
+  setTimeout(loadVideo, 300);
+
+}
+
+function exitFullscreen() {
+
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  }
+
+}
+
+function goBack() {
+
+  location.href = 'mychurch://back';
+
+}
+
+updateInterface();
+loadVideo();
+
 </script>
 
 </body>
