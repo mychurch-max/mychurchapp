@@ -11,42 +11,73 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   margin: 0;
+  min-height: 100%;
   background: #000;
   color: white;
   font-family: Arial, sans-serif;
 }
 
+/* TOP HEADER */
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px;
+  min-height: 62px;
+  padding: 10px 12px;
   background: #151515;
+  border-bottom: 1px solid #444;
 }
 
 button {
   border: none;
   border-radius: 7px;
-  padding: 11px 15px;
+  padding: 12px 15px;
   background: #d4af37;
-  color: black;
+  color: #000;
+  font-size: 14px;
   font-weight: bold;
   cursor: pointer;
+  min-height: 42px;
+}
+
+button:active {
+  opacity: 0.7;
+}
+
+button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.back-button {
+  flex-shrink: 0;
+  font-size: 15px;
 }
 
 .title {
   flex: 1;
+  min-width: 0;
   font-size: 17px;
   font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+/* VIDEO PLAYER */
 .player {
   width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
   aspect-ratio: 16 / 9;
   position: relative;
   background: #111;
+  z-index: 1;
 }
 
 iframe {
@@ -54,6 +85,8 @@ iframe {
   height: 100%;
   border: 0;
   position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
 #loading {
@@ -63,29 +96,60 @@ iframe {
   justify-content: center;
   align-items: center;
   background: #111;
+  color: white;
+  font-size: 16px;
   z-index: 2;
 }
 
-.controls {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 18px 10px;
+/* VIDEO TITLE */
+.video-heading {
+  padding: 16px 12px;
+  text-align: center;
+  color: #d4af37;
+  font-size: 19px;
+  font-weight: bold;
 }
 
-button:disabled {
-  opacity: 0.35;
-  cursor: default;
+/* PLAYER CONTROLS */
+.controls {
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 10px;
+  background: #151515;
+  border-top: 1px solid #444;
+}
+
+@media (max-width: 480px) {
+  .controls {
+    gap: 7px;
+  }
+
+  .controls button {
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .title {
+    font-size: 14px;
+  }
 }
 </style>
 </head>
 
 <body>
 
+<!-- BACK BUTTON AND TITLE -->
 <div class="header">
 
-  <button onclick="goBack()">← Back</button>
+  <button class="back-button" onclick="goBack()">
+    ← Back
+  </button>
 
   <div class="title" id="title">
     Bible Story
@@ -93,9 +157,12 @@ button:disabled {
 
 </div>
 
+<!-- YOUTUBE VIDEO -->
 <div class="player">
 
-  <div id="loading">Loading Bible story...</div>
+  <div id="loading">
+    Loading Bible story...
+  </div>
 
   <iframe
     id="youtube"
@@ -106,6 +173,12 @@ button:disabled {
 
 </div>
 
+<!-- VIDEO TITLE -->
+<div class="video-heading" id="videoHeading">
+  Bible Story
+</div>
+
+<!-- PLAYER CONTROLS -->
 <div class="controls">
 
   <button id="previous" onclick="navigate('prev')">
@@ -117,7 +190,7 @@ button:disabled {
   </button>
 
   <button onclick="exitFullscreen()">
-    Exit Fullscreen
+    ⛶ Exit Fullscreen
   </button>
 
   <button id="next" onclick="navigate('next')">
@@ -147,7 +220,10 @@ function updateInterface() {
 
   document.getElementById('title').textContent = videoTitle;
 
+  document.getElementById('videoHeading').textContent = videoTitle;
+
   document.getElementById('previous').disabled = !previousId;
+
   document.getElementById('next').disabled = !nextId;
 
 }
@@ -155,11 +231,15 @@ function updateInterface() {
 function loadVideo() {
 
   if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+
     loading.textContent = 'Invalid video ID.';
+
     return;
+
   }
 
   loading.style.display = 'flex';
+
   loading.textContent = 'Loading Bible story...';
 
   iframe.src =
@@ -170,37 +250,61 @@ function loadVideo() {
 }
 
 iframe.addEventListener('load', () => {
+
   loading.style.display = 'none';
+
 });
 
+// BACK TO FLUTTER
 function goBack() {
+
   location.href = 'mychurch://back';
+
 }
 
+// PREVIOUS AND NEXT
+function navigate(direction) {
+
+  if (direction === 'next' && nextId) {
+
+    location.href = 'mychurch://next';
+
+  }
+
+  if (direction === 'prev' && previousId) {
+
+    location.href = 'mychurch://previous';
+
+  }
+
+}
+
+// RELOAD CURRENT VIDEO
 function retryVideo() {
 
   loading.style.display = 'flex';
+
+  loading.textContent = 'Reloading video...';
+
   iframe.src = 'about:blank';
 
   setTimeout(loadVideo, 300);
 
 }
 
+// EXIT FULLSCREEN
 function exitFullscreen() {
 
   if (document.fullscreenElement) {
+
     document.exitFullscreen();
+
   }
 
 }
 
-function goBack() {
-
-  location.href = 'mychurch://back';
-
-}
-
 updateInterface();
+
 loadVideo();
 
 </script>
